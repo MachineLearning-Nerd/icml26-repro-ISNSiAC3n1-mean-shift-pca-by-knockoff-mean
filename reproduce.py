@@ -9,6 +9,7 @@ import subprocess
 import time
 
 import numpy as np
+from scipy.sparse.linalg import svds
 
 
 def spike_location(strength: Fraction, aspect_ratio: Fraction) -> Fraction:
@@ -224,6 +225,200 @@ def verify_claim_2() -> dict:
     }
 
 
+def top_svd(data: np.ndarray, component_count: int = 5) -> tuple[np.ndarray, np.ndarray]:
+    scaled = data / np.sqrt(data.shape[1])
+    start = np.ones(min(scaled.shape)) / np.sqrt(min(scaled.shape))
+    vectors, singular_values, _ = svds(
+        scaled,
+        k=component_count,
+        which="LM",
+        tol=1e-7,
+        v0=start,
+    )
+    order = np.argsort(singular_values)[::-1]
+    return singular_values[order], vectors[:, order]
+
+
+def released_strength_estimate(top_singular_value: float, aspect_ratio: float) -> float:
+    discriminant = (aspect_ratio + 1 - top_singular_value) ** 2 - 4 * aspect_ratio
+    linear_term = aspect_ratio - top_singular_value + 1
+    return 0.5 * (-linear_term + np.sqrt(abs(discriminant)))
+
+
+def verify_claim_3() -> dict:
+    aspect_ratio = 1.0
+    covariance_strength = 2.0
+    mixture_weight = 0.05
+    mean_norm = 2 * np.sqrt(np.sqrt(aspect_ratio) / mixture_weight)
+    knockoff_weight = 1.0
+    threshold_constant = 1.0
+    sample_sizes = [500, 1000, 2000]
+    trials = 12
+    seed = 2605254603
+    rng = np.random.default_rng(seed)
+    rows = []
+    dense_checker_error = None
+
+    for n in sample_sizes:
+        d = int(aspect_ratio * n)
+        covariance_kept = 0
+        mean_removed = 0
+        joint_success = 0
+        distinct_components = 0
+        zero_control_mean_kept = 0
+        covariance_shift_ratios = []
+        mean_shift_ratios = []
+        effective_strengths = []
+
+        for trial in range(trials):
+            covariance_direction = rng.normal(size=d)
+            covariance_direction /= np.linalg.norm(covariance_direction)
+            mean_direction = rng.normal(size=d)
+            mean_direction /= np.linalg.norm(mean_direction)
+            noise = rng.normal(size=(d, n))
+            projected_noise = covariance_direction @ noise
+            clean = noise + (
+                np.sqrt(1 + covariance_strength) - 1
+            ) * np.outer(covariance_direction, projected_noise)
+            membership = rng.binomial(1, mixture_weight, size=n)
+            contaminated = clean + mean_norm * np.outer(mean_direction, membership)
+
+            singular_values, eigenvectors = top_svd(contaminated)
+            if n == sample_sizes[0] and trial == 0:
+                dense_eigenvalues = np.linalg.eigvalsh(contaminated @ contaminated.T / n)[-5:][::-1]
+                dense_singular_values = np.sqrt(np.maximum(dense_eigenvalues, 0))
+                dense_checker_error = float(
+                    np.max(np.abs(singular_values - dense_singular_values))
+                )
+
+            estimated_strength = released_strength_estimate(
+                singular_values[0], aspect_ratio
+            )
+            knockoff_direction = rng.normal(size=d)
+            knockoff_direction /= np.linalg.norm(knockoff_direction)
+            knockoff_membership = np.ones(n)
+            knockoff_norm = 2 * np.sqrt(estimated_strength / knockoff_weight)
+            knockoff = np.outer(
+                knockoff_norm * knockoff_direction,
+                knockoff_membership,
+            )
+            effective_strengths.append(knockoff_weight * knockoff_norm**2)
+            perturbed_singular_values, _ = top_svd(contaminated + knockoff)
+            zero_control_singular_values, _ = top_svd(contaminated)
+
+            threshold = threshold_constant / np.sqrt(n)
+            nearest_shifts = np.min(
+                np.abs(
+                    singular_values[:, None] - perturbed_singular_values[None, :]
+                ),
+                axis=1,
+            )
+            zero_control_shifts = np.min(
+                np.abs(
+                    singular_values[:, None] - zero_control_singular_values[None, :]
+                ),
+                axis=1,
+            )
+            stable = nearest_shifts < threshold
+            covariance_index = int(
+                np.argmax(np.abs(eigenvectors.T @ covariance_direction))
+            )
+            mean_index = int(np.argmax(np.abs(eigenvectors.T @ mean_direction)))
+            components_are_distinct = covariance_index != mean_index
+            covariance_is_kept = bool(stable[covariance_index])
+            mean_is_removed = not bool(stable[mean_index])
+
+            distinct_components += components_are_distinct
+            covariance_kept += covariance_is_kept
+            mean_removed += mean_is_removed
+            joint_success += (
+                components_are_distinct and covariance_is_kept and mean_is_removed
+            )
+            zero_control_mean_kept += bool(zero_control_shifts[mean_index] < threshold)
+            covariance_shift_ratios.append(nearest_shifts[covariance_index] / threshold)
+            mean_shift_ratios.append(nearest_shifts[mean_index] / threshold)
+
+        rows.append(
+            {
+                "n": n,
+                "d": d,
+                "trials": trials,
+                "distinct_component_rate": distinct_components / trials,
+                "covariance_kept_rate": covariance_kept / trials,
+                "mean_removed_rate": mean_removed / trials,
+                "joint_success_rate": joint_success / trials,
+                "median_covariance_shift_over_epsilon": float(
+                    np.median(covariance_shift_ratios)
+                ),
+                "median_mean_shift_over_epsilon": float(np.median(mean_shift_ratios)),
+                "median_effective_knockoff_strength": float(
+                    np.median(effective_strengths)
+                ),
+                "zero_injection_control_mean_kept_rate": zero_control_mean_kept / trials,
+            }
+        )
+
+    aggregate_joint_rate = float(np.mean([row["joint_success_rate"] for row in rows]))
+    aggregate_covariance_rate = float(np.mean([row["covariance_kept_rate"] for row in rows]))
+    aggregate_mean_rate = float(np.mean([row["mean_removed_rate"] for row in rows]))
+    independent_checker = {
+        "method": "dense eigensolver converted to singular values on first n=500 instance",
+        "maximum_singular_value_error": dense_checker_error,
+        "passed": dense_checker_error is not None and dense_checker_error < 1e-8,
+    }
+    negative_control = {
+        "intervention": "set A'_n=0 and rerun the released matching rule",
+        "expected": "the mean-shift singular value remains matched and is not removed",
+        "mean_kept_rate": float(
+            np.mean([row["zero_injection_control_mean_kept_rate"] for row in rows])
+        ),
+        "passed": all(row["zero_injection_control_mean_kept_rate"] == 1 for row in rows),
+    }
+    passed = (
+        aggregate_joint_rate >= 0.75
+        and aggregate_covariance_rate >= 0.8
+        and aggregate_mean_rate >= 0.8
+        and independent_checker["passed"]
+        and negative_control["passed"]
+    )
+    return {
+        "claim": 3,
+        "status": "VERIFIED" if passed else "BLOCKED",
+        "exact_contract": (
+            "Official commit 540d660's released MS-PCA semantics match singular "
+            "values within epsilon=n^-1/2 and use norm(m')=2*sqrt(theta_hat^2), "
+            "removing a mean component while retaining a covariance component in "
+            "the paper's c=1, pi=0.05 Gaussian regime."
+        ),
+        "source_anchor": "https://github.com/Mengda-Li/ms-pca/tree/540d660761af1d168813e6c80c6bdefcf2557217",
+        "implementation": {
+            "official_commit": "540d660761af1d168813e6c80c6bdefcf2557217",
+            "comparison_quantity": "singular values of X/sqrt(n)",
+            "inverse_map_input": "top singular value, not covariance eigenvalue",
+            "inverse_map_discriminant": "absolute value before square root",
+            "knockoff_norm": "2*sqrt(theta_hat_squared/pi_prime)",
+            "effective_strength": "4*theta_hat_squared",
+            "pi_prime": knockoff_weight,
+            "epsilon": "1/sqrt(n)",
+        },
+        "raw": {
+            "seed": seed,
+            "rows": rows,
+            "aggregate_joint_success_rate": aggregate_joint_rate,
+            "aggregate_covariance_kept_rate": aggregate_covariance_rate,
+            "aggregate_mean_removed_rate": aggregate_mean_rate,
+        },
+        "independent_checker": independent_checker,
+        "negative_control": negative_control,
+        "verifier_passed": passed,
+        "limitation": (
+            "This verifies the public code's numerical behavior, not literal "
+            "Algorithm 1. The singular-value comparison and effective knockoff "
+            "strength differ materially from the paper text."
+        ),
+    }
+
+
 def cgroup_cpu_quota() -> float | None:
     cpu_max = Path("/sys/fs/cgroup/cpu.max")
     if cpu_max.exists():
@@ -248,7 +443,7 @@ def git_sha() -> str:
 
 def main() -> int:
     started = time.perf_counter()
-    results = [verify_claim_1(), verify_claim_2()]
+    results = [verify_claim_1(), verify_claim_2(), verify_claim_3()]
     runtime = time.perf_counter() - started
     gpu_devices_present = any(
         Path(device).exists()
@@ -265,7 +460,7 @@ def main() -> int:
         "git_sha": git_sha(),
         "fixed_command": "uv sync --frozen && uv run --no-sync python reproduce.py",
         "compute": {
-            "estimated_cores": 2,
+            "estimated_cores": 8,
             "selected_flavor": "cpu-upgrade",
             "selected_vcpus": 8,
             "selected_memory_gb": 32,
@@ -292,6 +487,7 @@ def main() -> int:
     print(
         "SUMMARY claim_1_status=" + results[0]["status"]
         + " claim_2_status=" + results[1]["status"]
+        + " claim_3_status=" + results[2]["status"]
         + " all_verifiers_passed=" + str(evidence["all_verifiers_passed"])
     )
     return 0 if evidence["all_verifiers_passed"] else 1

@@ -1,0 +1,7 @@
+{
+  "claim": 3,
+  "contract": "The official released MS-PCA implementation at commit 540d660 removes a mean component and retains a covariance component using its singular-value matching and released knockoff scaling.",
+  "source": "https://github.com/Mengda-Li/ms-pca/tree/540d660761af1d168813e6c80c6bdefcf2557217",
+  "pass_condition": "At least 75% joint success and 80% marginal rates, independent singular-value agreement, and an executed zero-injection control that keeps the mean component.",
+  "verdicts": ["VERIFIED", "BLOCKED"]
+}
