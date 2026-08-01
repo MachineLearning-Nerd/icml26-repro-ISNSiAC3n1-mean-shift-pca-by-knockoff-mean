@@ -626,15 +626,19 @@ def verify_claim_4_analytical() -> dict:
     threshold_strength = np.sqrt(float(aspect_ratio))
     control_strength = threshold_strength
     control_derivative = 1 - float(aspect_ratio) / control_strength**2
-    control_is_supercritical = control_strength > threshold_strength
-    route_accepts_control = control_is_supercritical and abs(control_derivative) > 1e-12
+    control_is_supercritical = bool(control_strength > threshold_strength)
+    route_accepts_control = bool(
+        control_is_supercritical and abs(control_derivative) > 1e-12
+    )
 
     proof_steps = [
         {
             "step": "supercritical separation",
             "statement": "strength=2 > sqrt(c), so the outlier is isolated from the edge",
-            "checked": float(spike_strength) > threshold_strength
-            and float(outlier_location) > edge_location,
+            "checked": bool(
+                float(spike_strength) > threshold_strength
+                and float(outlier_location) > edge_location
+            ),
         },
         {
             "step": "covariance outlier CLT",
@@ -667,7 +671,9 @@ def verify_claim_4_analytical() -> dict:
                 "The additive singular-value CLT plus smooth g and the Bernoulli "
                 "norm expansion imply sqrt(n)*(lambda_mean-g(theta^2))=O_p(1)."
             ),
-            "checked": spike_map_derivative > 0 and eigenvalue_delta_derivative > 0,
+            "checked": bool(
+                spike_map_derivative > 0 and eigenvalue_delta_derivative > 0
+            ),
         },
         {
             "step": "spectral edge law",
@@ -694,12 +700,14 @@ def verify_claim_4_analytical() -> dict:
         "outlier_map_derivative": control_derivative,
         "route_accepts_control": route_accepts_control,
     }
-    negative_control["passed"] = (
+    negative_control["passed"] = bool(
         not negative_control["strict_supercritical_assumption"]
         and abs(negative_control["outlier_map_derivative"]) < 1e-12
         and not negative_control["route_accepts_control"]
     )
-    passed = independent_checker["all_steps_checked"] and negative_control["passed"]
+    passed = bool(
+        independent_checker["all_steps_checked"] and negative_control["passed"]
+    )
     return {
         "claim": 4,
         "status": "VERIFIED" if passed else "BLOCKED",
