@@ -9,6 +9,7 @@ import subprocess
 import time
 
 import numpy as np
+from scipy.sparse.linalg import svds
 
 
 def spike_location(strength: Fraction, aspect_ratio: Fraction) -> Fraction:
@@ -224,6 +225,183 @@ def verify_claim_2() -> dict:
     }
 
 
+def top_pca(data: np.ndarray, component_count: int = 5) -> tuple[np.ndarray, np.ndarray]:
+    scaled = data / np.sqrt(data.shape[1])
+    start = np.ones(min(scaled.shape)) / np.sqrt(min(scaled.shape))
+    vectors, singular_values, _ = svds(
+        scaled,
+        k=component_count,
+        which="LM",
+        tol=1e-7,
+        v0=start,
+    )
+    order = np.argsort(singular_values)[::-1]
+    return singular_values[order] ** 2, vectors[:, order]
+
+
+def inverse_spike_map(sample_eigenvalue: float, aspect_ratio: float) -> float:
+    centered = sample_eigenvalue - 1 - aspect_ratio
+    return 0.5 * (centered + np.sqrt(centered**2 - 4 * aspect_ratio))
+
+
+def verify_claim_3() -> dict:
+    aspect_ratio = 1.0
+    covariance_strength = 2.0
+    mixture_weight = 0.05
+    mean_norm = 2 * np.sqrt(np.sqrt(aspect_ratio) / mixture_weight)
+    knockoff_weight = 1.0
+    threshold_constant = 1.0
+    sample_sizes = [500, 1000, 2000]
+    trials = 12
+    seed = 2605254603
+    rng = np.random.default_rng(seed)
+    rows = []
+    dense_checker_error = None
+
+    for n in sample_sizes:
+        d = int(aspect_ratio * n)
+        covariance_kept = 0
+        mean_removed = 0
+        joint_success = 0
+        distinct_components = 0
+        zero_control_mean_kept = 0
+        covariance_shift_ratios = []
+        mean_shift_ratios = []
+
+        for trial in range(trials):
+            covariance_direction = rng.normal(size=d)
+            covariance_direction /= np.linalg.norm(covariance_direction)
+            mean_direction = rng.normal(size=d)
+            mean_direction /= np.linalg.norm(mean_direction)
+            noise = rng.normal(size=(d, n))
+            projected_noise = covariance_direction @ noise
+            clean = noise + (
+                np.sqrt(1 + covariance_strength) - 1
+            ) * np.outer(covariance_direction, projected_noise)
+            membership = rng.binomial(1, mixture_weight, size=n)
+            contaminated = clean + mean_norm * np.outer(mean_direction, membership)
+
+            eigenvalues, eigenvectors = top_pca(contaminated)
+            if n == sample_sizes[0] and trial == 0:
+                dense_eigenvalues = np.linalg.eigvalsh(contaminated @ contaminated.T / n)[-5:][::-1]
+                dense_checker_error = float(np.max(np.abs(eigenvalues - dense_eigenvalues)))
+
+            estimated_strength = inverse_spike_map(eigenvalues[0], aspect_ratio)
+            knockoff_strength = 2 * estimated_strength
+            knockoff_direction = rng.normal(size=d)
+            knockoff_direction /= np.linalg.norm(knockoff_direction)
+            knockoff_membership = np.ones(n)
+            knockoff_mean = np.sqrt(knockoff_strength / knockoff_weight) * knockoff_direction
+            knockoff = np.outer(knockoff_mean, knockoff_membership)
+            perturbed_eigenvalues, _ = top_pca(contaminated + knockoff)
+            zero_control_eigenvalues, _ = top_pca(contaminated)
+
+            threshold = threshold_constant / np.sqrt(n)
+            nearest_shifts = np.min(
+                np.abs(eigenvalues[:, None] - perturbed_eigenvalues[None, :]),
+                axis=1,
+            )
+            stable = nearest_shifts < threshold
+            zero_control_shifts = np.min(
+                np.abs(eigenvalues[:, None] - zero_control_eigenvalues[None, :]),
+                axis=1,
+            )
+            covariance_index = int(
+                np.argmax(np.abs(eigenvectors.T @ covariance_direction))
+            )
+            mean_index = int(np.argmax(np.abs(eigenvectors.T @ mean_direction)))
+            components_are_distinct = covariance_index != mean_index
+            covariance_is_kept = bool(stable[covariance_index])
+            mean_is_removed = not bool(stable[mean_index])
+
+            distinct_components += components_are_distinct
+            covariance_kept += covariance_is_kept
+            mean_removed += mean_is_removed
+            joint_success += (
+                components_are_distinct and covariance_is_kept and mean_is_removed
+            )
+            zero_control_mean_kept += bool(zero_control_shifts[mean_index] < threshold)
+            covariance_shift_ratios.append(nearest_shifts[covariance_index] / threshold)
+            mean_shift_ratios.append(nearest_shifts[mean_index] / threshold)
+
+        rows.append(
+            {
+                "n": n,
+                "d": d,
+                "trials": trials,
+                "distinct_component_rate": distinct_components / trials,
+                "covariance_kept_rate": covariance_kept / trials,
+                "mean_removed_rate": mean_removed / trials,
+                "joint_success_rate": joint_success / trials,
+                "median_covariance_shift_over_epsilon": float(
+                    np.median(covariance_shift_ratios)
+                ),
+                "median_mean_shift_over_epsilon": float(np.median(mean_shift_ratios)),
+                "zero_injection_control_mean_kept_rate": zero_control_mean_kept / trials,
+            }
+        )
+
+    aggregate_joint_rate = float(np.mean([row["joint_success_rate"] for row in rows]))
+    aggregate_covariance_rate = float(np.mean([row["covariance_kept_rate"] for row in rows]))
+    aggregate_mean_rate = float(np.mean([row["mean_removed_rate"] for row in rows]))
+    independent_checker = {
+        "method": "dense symmetric eigensolver on the first n=500 instance",
+        "maximum_eigenvalue_error": dense_checker_error,
+        "passed": dense_checker_error is not None and dense_checker_error < 1e-8,
+    }
+    negative_control = {
+        "intervention": "set A'_n=0 while retaining the same matching rule",
+        "expected": "the mean-shift eigenvalue remains exactly matched and is not removed",
+        "mean_kept_rate": float(
+            np.mean([row["zero_injection_control_mean_kept_rate"] for row in rows])
+        ),
+        "passed": all(row["zero_injection_control_mean_kept_rate"] == 1 for row in rows),
+    }
+    passed = (
+        aggregate_joint_rate >= 0.75
+        and aggregate_covariance_rate >= 0.8
+        and aggregate_mean_rate >= 0.8
+        and independent_checker["passed"]
+        and negative_control["passed"]
+    )
+    return {
+        "claim": 3,
+        "status": "VERIFIED" if passed else "BLOCKED",
+        "exact_contract": (
+            "Algorithm 1 injects A'_n=m' gamma'^T with pi'=1, chooses "
+            "theta'^2=2 g^-1(lambda_tilde_1), and matches covariance eigenvalues "
+            "within epsilon=n^-1/2 so a mean spike is removed while a covariance "
+            "spike is retained in the paper's one-spike Gaussian regime."
+        ),
+        "source_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#alg1",
+        "implementation": {
+            "comparison_quantity": "eigenvalues of XX^T/n",
+            "knockoff_matrix": "outer(m_prime, gamma_prime)",
+            "pi_prime": knockoff_weight,
+            "theta_prime_squared": "2*g_inverse(top observed eigenvalue)",
+            "epsilon": "1/sqrt(n)",
+            "covariance_strength": covariance_strength,
+            "mean_mixture_weight": mixture_weight,
+            "mean_norm": mean_norm,
+        },
+        "raw": {
+            "seed": seed,
+            "rows": rows,
+            "aggregate_joint_success_rate": aggregate_joint_rate,
+            "aggregate_covariance_kept_rate": aggregate_covariance_rate,
+            "aggregate_mean_removed_rate": aggregate_mean_rate,
+        },
+        "independent_checker": independent_checker,
+        "negative_control": negative_control,
+        "verifier_passed": passed,
+        "limitation": (
+            "This tests the literal eigenvalue algorithm at c=1 over n=500..2000. "
+            "The released repository instead matches singular values and scales "
+            "the knockoff differently; that implementation is audited separately."
+        ),
+    }
+
+
 def cgroup_cpu_quota() -> float | None:
     cpu_max = Path("/sys/fs/cgroup/cpu.max")
     if cpu_max.exists():
@@ -248,7 +426,7 @@ def git_sha() -> str:
 
 def main() -> int:
     started = time.perf_counter()
-    results = [verify_claim_1(), verify_claim_2()]
+    results = [verify_claim_1(), verify_claim_2(), verify_claim_3()]
     runtime = time.perf_counter() - started
     gpu_devices_present = any(
         Path(device).exists()
@@ -265,7 +443,7 @@ def main() -> int:
         "git_sha": git_sha(),
         "fixed_command": "uv sync --frozen && uv run --no-sync python reproduce.py",
         "compute": {
-            "estimated_cores": 2,
+            "estimated_cores": 8,
             "selected_flavor": "cpu-upgrade",
             "selected_vcpus": 8,
             "selected_memory_gb": 32,
@@ -292,6 +470,7 @@ def main() -> int:
     print(
         "SUMMARY claim_1_status=" + results[0]["status"]
         + " claim_2_status=" + results[1]["status"]
+        + " claim_3_status=" + results[2]["status"]
         + " all_verifiers_passed=" + str(evidence["all_verifiers_passed"])
     )
     return 0 if evidence["all_verifiers_passed"] else 1

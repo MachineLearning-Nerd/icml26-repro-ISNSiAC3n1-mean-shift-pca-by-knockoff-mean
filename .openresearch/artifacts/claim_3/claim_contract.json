@@ -1,0 +1,7 @@
+{
+  "claim": 3,
+  "contract": "Literal Algorithm 1 injects the specified rank-one knockoff and uses eigenvalue tolerance C/sqrt(n) to remove a mean spike while retaining a covariance spike in the paper's Gaussian regime.",
+  "paper_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#alg1",
+  "pass_condition": "At least 75% joint success and at least 80% marginal covariance retention and mean removal, with independent eigensolver agreement and a zero-injection control that keeps the mean spike.",
+  "verdicts": ["VERIFIED", "BLOCKED"]
+}
