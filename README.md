@@ -4,7 +4,7 @@ This campaign tests all five judged claims of [arXiv 2605.25460](https://arxiv.o
 
 All research computation ran on Hugging Face `cpu-upgrade` (8-vCPU cgroup, 32 GB), never GPU. The fixed command on every experiment node was `uv sync --frozen && uv run --no-sync python reproduce.py`. The Section 4 reproduction uses 12 trials at `n=500,1000,2000`; exact Robust PCA is scoped to 12 paired `n=500` trials after a larger attempt exceeded one hour.
 
-[Read the illustrated technical report](reports/mean-shift-pca/report.md) · [Open the tutorial notebook](notebooks/mean_shift_pca_reproduction.py) · [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/MachineLearning-Nerd/icml26-repro-ISNSiAC3n1-mean-shift-pca-by-knockoff-mean/blob/main/notebooks/mean_shift_pca_reproduction.py)
+[Read the illustrated technical report](reports/mean-shift-pca/report.md) · [Read the release-gate report](space/artifacts/current/release/final_release_report.md) · [Open the tutorial notebook](notebooks/mean_shift_pca_reproduction.py) · [![Open in molab](https://marimo.io/molab-shield.svg)](https://molab.marimo.io/github/MachineLearning-Nerd/icml26-repro-ISNSiAC3n1-mean-shift-pca-by-knockoff-mean/blob/main/notebooks/mean_shift_pca_reproduction.py)
 
 ## Experiment log
 
@@ -17,7 +17,7 @@ All research computation ran on Hugging Face `cpu-upgrade` (8-vCPU cgroup, 32 GB
 | [`orx/claim-4-calibrated-fluctuation-scaling`](https://github.com/MachineLearning-Nerd/icml26-repro-ISNSiAC3n1-mean-shift-pca-by-knockoff-mean/tree/orx/claim-4-calibrated-fluctuation-scaling) | Direct finite-size scaling | `uv sync --frozen && uv run --no-sync python reproduce.py` | BLOCKED route: edge interval and rate discriminator failed | HF cpu-upgrade |
 | [`orx/claim-4-route-2-analytical-calibration`](https://github.com/MachineLearning-Nerd/icml26-repro-ISNSiAC3n1-mean-shift-pca-by-knockoff-mean/tree/orx/claim-4-route-2-analytical-calibration) | Corrected primary-source derivation | `uv sync --frozen && uv run --no-sync python reproduce.py` | Claim 4 VERIFIED in Gaussian supercritical regime | HF cpu-upgrade |
 | [`orx/claim-5-exact-section-4-benchmark`](https://github.com/MachineLearning-Nerd/icml26-repro-ISNSiAC3n1-mean-shift-pca-by-knockoff-mean/tree/orx/claim-5-exact-section-4-benchmark) | Section 4 5% benchmark | `uv sync --frozen && uv run --no-sync python reproduce.py` | Claim 5 VERIFIED within disclosed grid | HF cpu-upgrade |
-| [`orx/evaluator-visible-release-candidate`](https://github.com/MachineLearning-Nerd/icml26-repro-ISNSiAC3n1-mean-shift-pca-by-knockoff-mean/tree/orx/evaluator-visible-release-candidate) | Cumulative science and evaluator-visible release gates | `uv sync --frozen && uv run --no-sync python reproduce.py` | Candidate pending final gate run | HF cpu-upgrade |
+| [`orx/final-release-gates`](https://github.com/MachineLearning-Nerd/icml26-repro-ISNSiAC3n1-mean-shift-pca-by-knockoff-mean/tree/orx/final-release-gates) | Cumulative science and evaluator-blind release gates | `uv sync --frozen && uv run --no-sync python reproduce.py` | All science, bundle, notebook, and blind-review gates passed | HF cpu-upgrade |
 
 ## Reproduce
 

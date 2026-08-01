@@ -141,6 +141,58 @@ def main() -> int:
     checks["secret_scan"] = not secret_hits
     check(checks["secret_scan"], "secret-like text found: " + ", ".join(secret_hits), failures)
 
+    release = current / "release"
+    red_team = json.loads((release / "red_team.json").read_text())
+    checks["blind_review_passed"] = (
+        red_team["passed"]
+        and red_team["claims_located"] == [1, 2, 3, 4, 5]
+        and not red_team["conclusions_not_verified"]
+        and red_team["canonical_entrypoint"] == "pages/current-verification/page.md"
+    )
+    check(checks["blind_review_passed"], "evaluator-blind review failed", failures)
+
+    release_report = (release / "final_release_report.md").read_text()
+    checks["release_report_complete"] = all(
+        token in release_report
+        for token in (
+            "Previous live judged score: `5/10`",
+            "Conservative projected score range after the proposed change: `8/10–10/10`",
+            "Best-supported possible new score: `10/10`",
+            "| Claim | Current points | Possible points | Confidence | Evidence status | Basis and remaining risk |",
+            "No claim is `BLOCKED`",
+            "text-only additive Hugging Face API commit",
+            "awaiting judge",
+        )
+    )
+    check(checks["release_report_complete"], "final release report is incomplete", failures)
+
+    allowlist_path = release / "upload_allowlist.txt"
+    manifest_path = release / "upload_manifest.sha256"
+    allowlist = [line for line in allowlist_path.read_text().splitlines() if line]
+    manifest_entries = {}
+    for line in manifest_path.read_text().splitlines():
+        expected_hash, relative = line.split("  ", 1)
+        manifest_entries[relative] = expected_hash
+    expected_manifest_paths = set(allowlist) - {
+        "artifacts/current/release/upload_manifest.sha256"
+    }
+    checks["text_upload_allowlist"] = (
+        len(allowlist) == len(set(allowlist))
+        and allowlist == sorted(allowlist)
+        and all(not path.endswith(".png") for path in allowlist)
+        and all((root / path).is_file() for path in allowlist)
+        and set(manifest_entries) == expected_manifest_paths
+    )
+    if checks["text_upload_allowlist"]:
+        checks["upload_manifest_exact"] = all(
+            sha256((root / relative).read_bytes()).hexdigest() == expected_hash
+            for relative, expected_hash in manifest_entries.items()
+        )
+    else:
+        checks["upload_manifest_exact"] = False
+    check(checks["text_upload_allowlist"], "text upload allowlist is invalid", failures)
+    check(checks["upload_manifest_exact"], "upload manifest hash mismatch", failures)
+
     result = {
         "verifier": "artifacts/current/verify_bundle.py",
         "checks": checks,

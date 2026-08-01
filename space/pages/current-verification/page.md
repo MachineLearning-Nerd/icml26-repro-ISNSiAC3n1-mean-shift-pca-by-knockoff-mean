@@ -36,5 +36,8 @@ This page supersedes the earlier 6.3-second verifier. That page is retained unde
 - [Pinned uv lock](https://huggingface.co/spaces/DineshAI/ISNSiAC3n1/resolve/main/artifacts/current/uv.lock)
 - [Source and method audits](#/evidence-and-code)
 - [Evaluator visibility matrix](#/visibility-matrix)
+- [Final release report](https://huggingface.co/spaces/DineshAI/ISNSiAC3n1/resolve/main/artifacts/current/release/final_release_report.md)
+- [Evaluator-blind review record](https://huggingface.co/spaces/DineshAI/ISNSiAC3n1/resolve/main/artifacts/current/release/red_team.json)
+- [Exact command ledger](https://huggingface.co/spaces/DineshAI/ISNSiAC3n1/resolve/main/artifacts/current/release/commands.md)
 
 The exact planned publication action, after every release gate passes, is a text-only additive upload to the existing `DineshAI/ISNSiAC3n1` Space, followed by a hash-verified redownload. No second Space will be created.
