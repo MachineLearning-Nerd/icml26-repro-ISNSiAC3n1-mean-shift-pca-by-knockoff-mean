@@ -1,0 +1,7 @@
+{
+  "claim": 4,
+  "contract": "In the paper's Gaussian high-dimensional model, isolated covariance and Bernoulli mean spikes fluctuate at n^-1/2 while the unspiked upper edge fluctuates at n^-2/3.",
+  "paper_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#S2.SS0.SSS0.Px3",
+  "pass_condition": "Precommitted slope bands and bootstrap intervals cover the three target exponents; scaled dispersions are stable; the wrong-rate control and dense checker pass.",
+  "verdicts": ["VERIFIED", "BLOCKED"]
+}

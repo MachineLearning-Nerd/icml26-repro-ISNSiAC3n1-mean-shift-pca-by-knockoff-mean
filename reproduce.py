@@ -402,6 +402,219 @@ def verify_claim_3() -> dict:
     }
 
 
+def fit_fluctuation_slope(
+    sample_sizes: list[int],
+    values_by_size: list[list[float]],
+) -> tuple[float, list[float]]:
+    dispersions = [float(np.std(values, ddof=1)) for values in values_by_size]
+    slope = float(
+        np.polyfit(
+            np.log(np.asarray(sample_sizes, dtype=float)),
+            np.log(np.asarray(dispersions)),
+            1,
+        )[0]
+    )
+    return slope, dispersions
+
+
+def bootstrap_slope_interval(
+    sample_sizes: list[int],
+    values_by_size: list[list[float]],
+    rng: np.random.Generator,
+    draws: int = 1000,
+) -> list[float]:
+    slopes = []
+    for _ in range(draws):
+        resampled = [
+            rng.choice(values, size=len(values), replace=True).tolist()
+            for values in values_by_size
+        ]
+        slope, _ = fit_fluctuation_slope(sample_sizes, resampled)
+        slopes.append(slope)
+    return [float(np.quantile(slopes, 0.025)), float(np.quantile(slopes, 0.975))]
+
+
+def verify_claim_4() -> dict:
+    aspect_ratio = 0.5
+    spike_strength = 2.0
+    mixture_weight = 0.2
+    mean_norm = np.sqrt(spike_strength / mixture_weight)
+    sample_sizes = [300, 500, 800, 1250, 2000, 3200]
+    trials = 24
+    seed = 2605254604
+    rng = np.random.default_rng(seed)
+    covariance_values = []
+    mean_values = []
+    edge_values = []
+    raw_rows = []
+    dense_checker_errors = None
+
+    for n in sample_sizes:
+        d = int(aspect_ratio * n)
+        covariance_at_n = []
+        mean_at_n = []
+        edge_at_n = []
+        for trial in range(trials):
+            noise = rng.normal(size=(d, n))
+            covariance_direction = rng.normal(size=d)
+            covariance_direction /= np.linalg.norm(covariance_direction)
+            projected_noise = covariance_direction @ noise
+            covariance_data = noise + (
+                np.sqrt(1 + spike_strength) - 1
+            ) * np.outer(covariance_direction, projected_noise)
+
+            mean_direction = rng.normal(size=d)
+            mean_direction /= np.linalg.norm(mean_direction)
+            membership = rng.binomial(1, mixture_weight, size=n)
+            mean_data = noise + mean_norm * np.outer(mean_direction, membership)
+
+            covariance_top = float(top_pca(covariance_data, 1)[0][0])
+            mean_top = float(top_pca(mean_data, 1)[0][0])
+            edge_top = float(top_pca(noise, 1)[0][0])
+            covariance_at_n.append(covariance_top)
+            mean_at_n.append(mean_top)
+            edge_at_n.append(edge_top)
+
+            if n == sample_sizes[0] and trial == 0:
+                dense_tops = [
+                    float(np.linalg.eigvalsh(data @ data.T / n)[-1])
+                    for data in (covariance_data, mean_data, noise)
+                ]
+                dense_checker_errors = [
+                    abs(covariance_top - dense_tops[0]),
+                    abs(mean_top - dense_tops[1]),
+                    abs(edge_top - dense_tops[2]),
+                ]
+
+        covariance_values.append(covariance_at_n)
+        mean_values.append(mean_at_n)
+        edge_values.append(edge_at_n)
+        raw_rows.append(
+            {
+                "n": n,
+                "d": d,
+                "covariance_spike_eigenvalues": covariance_at_n,
+                "mean_spike_eigenvalues": mean_at_n,
+                "edge_eigenvalues": edge_at_n,
+            }
+        )
+
+    covariance_slope, covariance_sd = fit_fluctuation_slope(
+        sample_sizes, covariance_values
+    )
+    mean_slope, mean_sd = fit_fluctuation_slope(sample_sizes, mean_values)
+    edge_slope, edge_sd = fit_fluctuation_slope(sample_sizes, edge_values)
+    covariance_interval = bootstrap_slope_interval(
+        sample_sizes, covariance_values, rng
+    )
+    mean_interval = bootstrap_slope_interval(sample_sizes, mean_values, rng)
+    edge_interval = bootstrap_slope_interval(sample_sizes, edge_values, rng)
+
+    scaled_dispersions = {
+        "covariance_spike_sqrt_n_sd": [
+            sd * np.sqrt(n) for n, sd in zip(sample_sizes, covariance_sd)
+        ],
+        "mean_spike_sqrt_n_sd": [
+            sd * np.sqrt(n) for n, sd in zip(sample_sizes, mean_sd)
+        ],
+        "edge_n_two_thirds_sd": [
+            sd * n ** (2 / 3) for n, sd in zip(sample_sizes, edge_sd)
+        ],
+    }
+    scaled_stability = {
+        name: float(max(values) / min(values))
+        for name, values in scaled_dispersions.items()
+    }
+    independent_checker = {
+        "method": "dense symmetric eigensolver for all three first n=300 instances",
+        "absolute_errors": dense_checker_errors,
+        "passed": dense_checker_errors is not None and max(dense_checker_errors) < 1e-8,
+    }
+    negative_control = {
+        "test": "assign the edge exponent to outliers and the outlier exponent to the edge",
+        "covariance_closer_to_minus_half": abs(covariance_slope + 0.5)
+        < abs(covariance_slope + 2 / 3),
+        "mean_closer_to_minus_half": abs(mean_slope + 0.5)
+        < abs(mean_slope + 2 / 3),
+        "edge_closer_to_minus_two_thirds": abs(edge_slope + 2 / 3)
+        < abs(edge_slope + 0.5),
+    }
+    negative_control["passed"] = all(
+        value for key, value in negative_control.items() if key != "test"
+    )
+    interval_targets_covered = (
+        covariance_interval[0] <= -0.5 <= covariance_interval[1]
+        and mean_interval[0] <= -0.5 <= mean_interval[1]
+        and edge_interval[0] <= -2 / 3 <= edge_interval[1]
+    )
+    passed = (
+        -0.7 < covariance_slope < -0.3
+        and -0.7 < mean_slope < -0.3
+        and -0.9 < edge_slope < -0.45
+        and interval_targets_covered
+        and all(ratio < 3 for ratio in scaled_stability.values())
+        and independent_checker["passed"]
+        and negative_control["passed"]
+    )
+    return {
+        "claim": 4,
+        "status": "VERIFIED" if passed else "BLOCKED",
+        "exact_contract": (
+            "In the paper's high-dimensional Gaussian setting, isolated covariance "
+            "and Bernoulli mean-shift eigenvalues have n^-1/2 dispersion, while the "
+            "unspiked upper spectral edge has n^-2/3 dispersion."
+        ),
+        "source_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#S2.SS0.SSS0.Px3",
+        "source_citation_audit": {
+            "paper_cites": "Benaych-Georges and Nadakuditi (2012), Theorem 2.19",
+            "correction": (
+                "2.19 is an assumption for smallest-singular-value fluctuations; "
+                "the relevant largest-outlier CLT is Theorem 2.18."
+            ),
+            "remaining_gap": (
+                "Theorem 2.18 assumes an isotropic zero-mean right spike direction; "
+                "Bernoulli membership is not covered directly."
+            ),
+        },
+        "setup": {
+            "aspect_ratio": aspect_ratio,
+            "spike_strength": spike_strength,
+            "mean_mixture_weight": mixture_weight,
+            "sample_sizes": sample_sizes,
+            "trials_per_size": trials,
+            "sizes_selected_independently_of_target_exponents": True,
+        },
+        "raw": {
+            "seed": seed,
+            "rows": raw_rows,
+            "slopes": {
+                "covariance_spike": covariance_slope,
+                "mean_spike": mean_slope,
+                "spectral_edge": edge_slope,
+            },
+            "bootstrap_95_percent_intervals": {
+                "covariance_spike": covariance_interval,
+                "mean_spike": mean_interval,
+                "spectral_edge": edge_interval,
+            },
+            "standard_deviations": {
+                "covariance_spike": covariance_sd,
+                "mean_spike": mean_sd,
+                "spectral_edge": edge_sd,
+            },
+            "scaled_dispersions": scaled_dispersions,
+            "scaled_dispersion_max_min_ratios": scaled_stability,
+        },
+        "independent_checker": independent_checker,
+        "negative_control": negative_control,
+        "verifier_passed": passed,
+        "limitation": (
+            "This is direct finite-size verification in the paper's Gaussian model, "
+            "not a proof for every distribution allowed by the cited RMT results."
+        ),
+    }
+
+
 def cgroup_cpu_quota() -> float | None:
     cpu_max = Path("/sys/fs/cgroup/cpu.max")
     if cpu_max.exists():
@@ -426,7 +639,7 @@ def git_sha() -> str:
 
 def main() -> int:
     started = time.perf_counter()
-    results = [verify_claim_1(), verify_claim_2(), verify_claim_3()]
+    results = [verify_claim_1(), verify_claim_2(), verify_claim_3(), verify_claim_4()]
     runtime = time.perf_counter() - started
     gpu_devices_present = any(
         Path(device).exists()
@@ -471,6 +684,7 @@ def main() -> int:
         "SUMMARY claim_1_status=" + results[0]["status"]
         + " claim_2_status=" + results[1]["status"]
         + " claim_3_status=" + results[2]["status"]
+        + " claim_4_status=" + results[3]["status"]
         + " all_verifiers_passed=" + str(evidence["all_verifiers_passed"])
     )
     return 0 if evidence["all_verifiers_passed"] else 1
