@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "title": "Repro - Mean-Shift PCA by Knockoff Mean",
+  "emoji": "🎯",
+  "space_id": "DineshAI/ISNSiAC3n1",
+  "paper": null,
+  "tags": [
+    "icml2026-repro",
+    "paper-ISNSiAC3n1"
+  ],
+  "updated_at": "2026-08-01T08:21:29+00:00",
+  "root": {
+    "slug": "index",
+    "title": "Repro - Mean-Shift PCA by Knockoff Mean",
+    "file": "pages/index.md",
+    "children": [
+      {
+        "slug": "overview",
+        "title": "Overview",
+        "file": "pages/overview/page.md",
+        "children": []
+      },
+      {
+        "slug": "claims",
+        "title": "Claims",
+        "file": "pages/claims/page.md",
+        "children": []
+      },
+      {
+        "slug": "evidence",
+        "title": "Evidence",
+        "file": "pages/evidence/page.md",
+        "children": []
+      },
+      {
+        "slug": "verification-run",
+        "title": "Verification run",
+        "file": "pages/verification-run/page.md",
+        "children": []
+      },
+      {
+        "slug": "conclusion",
+        "title": "Conclusion",
+        "file": "pages/conclusion/page.md",
+        "children": []
+      }
+    ]
+  },
+  "agent_view_tokens": 1387,
+  "revision": "1785572489586934292"
+}

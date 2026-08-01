@@ -1,0 +1,24 @@
+{
+  "claim": 5,
+  "paper_statement": "Section 4 reports that at nonvanishing aspect ratio, existing Robust PCA and ordinary PCA fail under 5% mean-shift contamination while MS-PCA recovers the clean principal component.",
+  "tested_domain": {
+    "model": "one-spike Gaussian covariance plus independent rank-one Bernoulli mean shift",
+    "aspect_ratio_d_over_n": 1,
+    "mixture_weight": 0.05,
+    "covariance_strength": 2,
+    "mean_norm": 8.94427190999916,
+    "sample_sizes": [500, 1000, 2000],
+    "trials_per_size": 12,
+    "robust_pca_subset": "12 paired trials at n=500"
+  },
+  "verifier": "reproduce.py::verify_claim_5",
+  "pass_conditions": [
+    "MS-PCA mean alignment is at least 0.60 at every size",
+    "PCA mean alignment is at most 0.45 at every size and rpca==0.1.6 mean alignment is at most 0.45 on its paired n=500 subset",
+    "MS-PCA selects a stable component in at least 90% of trials at every size",
+    "paired bootstrap 95% lower bounds for MS-PCA minus both baselines exceed 0.20",
+    "MS-PCA wins at least 85% of paired trials against both baselines",
+    "independent dense eigensolver and contamination-off control pass"
+  ],
+  "failure_semantics": "Any unmet condition yields BLOCKED and a nonzero process exit."
+}

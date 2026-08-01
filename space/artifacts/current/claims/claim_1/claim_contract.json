@@ -1,0 +1,8 @@
+{
+  "claim": 1,
+  "contract": "For every parameter tuple satisfying Theorem 3.5 assumptions, Lambda_P and Lambda_A are disjoint and separable by asymptotic eigenvalue location.",
+  "domain": "Assumptions 3.1, 3.3, and 3.4; positive covariance spikes; d/n -> c in (0,infinity)",
+  "quantifier": "universal over all admissible covariance and mean-shift strengths",
+  "success": "VERIFIED only with a proof of disjointness over the domain; FALSIFIED by one assumption-satisfying tuple with equal mapped locations",
+  "verdict": "FALSIFIED"
+}

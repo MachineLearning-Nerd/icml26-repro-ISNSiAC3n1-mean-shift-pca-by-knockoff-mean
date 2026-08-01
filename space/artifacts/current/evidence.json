@@ -1,0 +1,847 @@
+{
+  "all_verifiers_passed": true,
+  "arxiv": "2605.25460",
+  "claims": [
+    {
+      "assumptions": {
+        "above_bbp": true,
+        "aspect_ratio_c": "1/2",
+        "bbp_condition": "ell > sqrt(c) and theta^2 > sqrt(c)",
+        "covariance_strength_ell": "3",
+        "directions": "independent Haar unit vectors, independent of data and membership",
+        "mean_norm_squared": "15",
+        "mean_strength_theta_squared": "3",
+        "mixture_weight_pi": "1/5",
+        "noise": "iid Gaussian (zero mean, unit variance, finite fourth moment)",
+        "rank_covariance": 1,
+        "rank_mean": 1
+      },
+      "claim": 1,
+      "exact_contract": "For every parameter tuple satisfying Theorem 3.5 assumptions, the covariance-induced set Lambda_P and mean-induced set Lambda_A are disjoint and hence separable by asymptotic eigenvalue location.",
+      "independent_checker": {
+        "covariance_location_fraction": "14/3",
+        "cross_product_difference": 0,
+        "mean_location_fraction": "14/3",
+        "passed": true
+      },
+      "limitation": "This falsifies universal disjointness by exact algebra. It does not dispute Theorem 3.5's union/convergence formula or generic separation when the two mapped strengths differ.",
+      "negative_control": {
+        "expected_falsification_triggered": false,
+        "falsification_triggered": false,
+        "location_gap_fraction": "31/20",
+        "mean_location_fraction": "187/60",
+        "mean_strength_theta_squared": "6/5",
+        "passed": true
+      },
+      "raw": {
+        "covariance_location_fraction": "14/3",
+        "locations_equal": true,
+        "mean_location_fraction": "14/3"
+      },
+      "source_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#S3.Thmtheorem5",
+      "status": "FALSIFIED",
+      "verifier_passed": true
+    },
+    {
+      "assumptions": {
+        "clean_esd": "(1/d) delta_1 + ((d-1)/d) delta_0 -> delta_0",
+        "clean_matrix": "X=u*1_n^T, with u a Haar unit vector",
+        "d_over_n": 1,
+        "independence": "q and gamma independent of X",
+        "mean_shift": "A=q*gamma^T, q independent Haar, gamma_i iid Bernoulli(1/5)",
+        "rank_mean_shift": 1
+      },
+      "claim": 2,
+      "exact_contract": "Under Assumptions 3.1 and 3.10, every eigenvector u of XX^T/n satisfies ||(A A^T + A X^T + X A^T)u/n||=O_p(n^-1/2).",
+      "independent_checker": {
+        "clean_covariance_spectrum": "one eigenvalue 1; d-1 eigenvalues 0",
+        "clean_esd_limit": "delta_0 (compact support)",
+        "contradicts_O_p_n_minus_half": true,
+        "counterexample_limits": {
+          "alpha": 0,
+          "p_hat": 0.2,
+          "residual_norm": 0.2,
+          "s_for_v_all_ones": 0.2
+        },
+        "residual_formula": "||q*(p_hat*alpha+s)+u*(alpha*s)||, alpha=<q,u>, s=<gamma,v>/n",
+        "root_n_scaled_residual_limit": "infinity"
+      },
+      "limitation": "This is a counterexample to Theorem 3.11 under its cited assumptions. It does not apply if an additional centering or isotropic-right-factor condition on X was intended but unstated.",
+      "negative_control": {
+        "clean_right_factor": "alternating +1,-1",
+        "final_median": 0.0032288661416099264,
+        "observed_slope": -0.502738712396082,
+        "passed": true,
+        "why_it_should_not_falsify": "<gamma,v>/n is O_p(n^-1/2)"
+      },
+      "raw": {
+        "counterexample_log_log_slope": 0.00005158320854781339,
+        "rows": [
+          {
+            "centered_control_median": 0.018244946768269366,
+            "centered_control_q05": 0.0020386978904081746,
+            "centered_control_q95": 0.05559036316159524,
+            "counterexample_median": 0.1997491961169075,
+            "counterexample_q05": 0.1598435289958681,
+            "counterexample_q95": 0.2504899048722792,
+            "d": 250,
+            "n": 250
+          },
+          {
+            "centered_control_median": 0.012967991242625185,
+            "centered_control_q05": 0.0016204073023009383,
+            "centered_control_q95": 0.03700646861538696,
+            "counterexample_median": 0.20216188004293079,
+            "counterexample_q05": 0.17188519723501855,
+            "counterexample_q95": 0.2364078596741795,
+            "d": 500,
+            "n": 500
+          },
+          {
+            "centered_control_median": 0.010012965386305153,
+            "centered_control_q05": 0.001289811419895324,
+            "centered_control_q95": 0.02765856799650056,
+            "counterexample_median": 0.20030829454812568,
+            "counterexample_q05": 0.17555025108798347,
+            "counterexample_q95": 0.22385586337642738,
+            "d": 1000,
+            "n": 1000
+          },
+          {
+            "centered_control_median": 0.0071330089900510495,
+            "centered_control_q05": 0.0008344997821252988,
+            "centered_control_q95": 0.020335991279174348,
+            "counterexample_median": 0.20035073128579758,
+            "counterexample_q05": 0.18433881731483656,
+            "counterexample_q95": 0.21697107708083485,
+            "d": 2000,
+            "n": 2000
+          },
+          {
+            "centered_control_median": 0.004465090279870401,
+            "centered_control_q05": 0.0002647074327924078,
+            "centered_control_q95": 0.01270328895071412,
+            "counterexample_median": 0.1995445724630871,
+            "counterexample_q05": 0.1879972595646694,
+            "counterexample_q95": 0.21228692859850326,
+            "d": 4000,
+            "n": 4000
+          },
+          {
+            "centered_control_median": 0.0032288661416099264,
+            "centered_control_q05": 0.0004035005398382092,
+            "centered_control_q95": 0.008781524147615401,
+            "counterexample_median": 0.20135895374848095,
+            "counterexample_q05": 0.19223424822809276,
+            "counterexample_q95": 0.20911044602848833,
+            "d": 8000,
+            "n": 8000
+          }
+        ],
+        "seed": 2605254602,
+        "trials_per_size": 200
+      },
+      "source_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#S3.Thmtheorem11",
+      "status": "FALSIFIED",
+      "verifier_passed": true
+    },
+    {
+      "claim": 3,
+      "exact_contract": "Algorithm 1 injects A'_n=m' gamma'^T with pi'=1, chooses theta'^2=2 g^-1(lambda_tilde_1), and matches covariance eigenvalues within epsilon=n^-1/2 so a mean spike is removed while a covariance spike is retained in the paper's one-spike Gaussian regime.",
+      "implementation": {
+        "comparison_quantity": "eigenvalues of XX^T/n",
+        "covariance_strength": 2,
+        "epsilon": "1/sqrt(n)",
+        "knockoff_matrix": "outer(m_prime, gamma_prime)",
+        "mean_mixture_weight": 0.05,
+        "mean_norm": 8.94427190999916,
+        "pi_prime": 1,
+        "theta_prime_squared": "2*g_inverse(top observed eigenvalue)"
+      },
+      "independent_checker": {
+        "maximum_eigenvalue_error": 1.6431300764452317e-14,
+        "method": "dense symmetric eigensolver on the first n=500 instance",
+        "passed": true
+      },
+      "limitation": "This tests the literal eigenvalue algorithm at c=1 over n=500..2000. The released repository instead matches singular values and scales the knockoff differently; that implementation is audited separately.",
+      "negative_control": {
+        "expected": "the mean-shift eigenvalue remains exactly matched and is not removed",
+        "intervention": "set A'_n=0 while retaining the same matching rule",
+        "mean_kept_rate": 1,
+        "passed": true
+      },
+      "raw": {
+        "aggregate_covariance_kept_rate": 0.9166666666666666,
+        "aggregate_joint_success_rate": 0.9166666666666666,
+        "aggregate_mean_removed_rate": 1,
+        "rows": [
+          {
+            "covariance_kept_rate": 0.75,
+            "d": 500,
+            "distinct_component_rate": 1,
+            "joint_success_rate": 0.75,
+            "mean_removed_rate": 1,
+            "median_covariance_shift_over_epsilon": 0.4835325811710472,
+            "median_mean_shift_over_epsilon": 6.696011604958832,
+            "n": 500,
+            "trials": 12,
+            "zero_injection_control_mean_kept_rate": 1
+          },
+          {
+            "covariance_kept_rate": 1,
+            "d": 1000,
+            "distinct_component_rate": 1,
+            "joint_success_rate": 1,
+            "mean_removed_rate": 1,
+            "median_covariance_shift_over_epsilon": 0.17352334220897003,
+            "median_mean_shift_over_epsilon": 11.37146012130168,
+            "n": 1000,
+            "trials": 12,
+            "zero_injection_control_mean_kept_rate": 1
+          },
+          {
+            "covariance_kept_rate": 1,
+            "d": 2000,
+            "distinct_component_rate": 1,
+            "joint_success_rate": 1,
+            "mean_removed_rate": 1,
+            "median_covariance_shift_over_epsilon": 0.10314465516891302,
+            "median_mean_shift_over_epsilon": 14.713510312936428,
+            "n": 2000,
+            "trials": 12,
+            "zero_injection_control_mean_kept_rate": 1
+          }
+        ],
+        "seed": 2605254603
+      },
+      "source_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#alg1",
+      "status": "VERIFIED",
+      "verifier_passed": true
+    },
+    {
+      "claim": 4,
+      "exact_contract": "For the paper's supercritical Gaussian covariance and Bernoulli mean-shift models, isolated eigenvalues fluctuate at n^-1/2, while the unspiked upper edge fluctuates at n^-2/3.",
+      "independent_checker": {
+        "all_steps_checked": true,
+        "edge_location": 2.914213562373095,
+        "eigenvalue_delta_derivative": 3.872983346207417,
+        "exact_outlier_location": "15/4",
+        "floating_outlier_location": 3.75,
+        "outlier_edge_gap": 0.8357864376269051,
+        "spike_map_derivative": "7/8"
+      },
+      "limitation": "The analytical bridge is specific to Gaussian bi-orthogonal invariance. It does not extend the paper's statement to arbitrary non-Gaussian matrices or threshold-critical spikes.",
+      "machine_checked_derivation": [
+        {
+          "checked": true,
+          "statement": "strength=2 > sqrt(c), so the outlier is isolated from the edge",
+          "step": "supercritical separation"
+        },
+        {
+          "checked": true,
+          "statement": "The supercritical spiked-Wishart CLT gives sqrt(n)*(lambda_cov-g(ell))=O_p(1).",
+          "step": "covariance outlier CLT"
+        },
+        {
+          "checked": true,
+          "statement": "Conditional on nonzero Bernoulli gamma, Gaussian noise is right orthogonally invariant, so gamma/||gamma|| is distributionally equivalent to the isotropic right direction in the additive CLT.",
+          "step": "conditional right invariance"
+        },
+        {
+          "checked": true,
+          "statement": "||gamma||^2/n=p_hat=pi+O_p(n^-1/2), hence the conditional mean-spike strength is theta_n^2=theta^2+O_p(n^-1/2).",
+          "step": "random Bernoulli norm"
+        },
+        {
+          "checked": true,
+          "statement": "The additive singular-value CLT plus smooth g and the Bernoulli norm expansion imply sqrt(n)*(lambda_mean-g(theta^2))=O_p(1).",
+          "step": "mean outlier delta method"
+        },
+        {
+          "checked": true,
+          "statement": "The white-Wishart upper-edge law gives n^(2/3)*(lambda_edge-(1+sqrt(c))^2)=O_p(1).",
+          "step": "spectral edge law"
+        }
+      ],
+      "negative_control": {
+        "outlier_map_derivative": 2.220446049250313e-16,
+        "passed": true,
+        "route_accepts_control": false,
+        "strength": 0.7071067811865476,
+        "strict_supercritical_assumption": false,
+        "test": "apply the supercritical outlier CLT exactly at the BBP threshold"
+      },
+      "primary_sources": [
+        "arXiv:1103.2221v2, Assumptions 2.16-2.17 and Theorem 2.18",
+        "Bai and Yao (2008), Central limit theorems for eigenvalues in a spiked population model",
+        "Baik, Ben Arous, and Peche (2005), upper-edge phase transition"
+      ],
+      "raw": {
+        "aspect_ratio": "1/2",
+        "edge_location": 2.914213562373095,
+        "mixture_weight": "1/5",
+        "outlier_location": "15/4",
+        "route_1_empirical_evidence": {
+          "covariance_slope": -0.440098925276218,
+          "edge_slope": -0.8059763840654185,
+          "mean_slope": -0.6080891263076059,
+          "reason": "edge bootstrap interval narrowly missed -2/3 and the mean wrong-rate discriminator failed",
+          "status": "BLOCKED"
+        },
+        "spike_map_derivative": "7/8",
+        "spike_strength": "2"
+      },
+      "source_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#S2.SS0.SSS0.Px3",
+      "source_citation_audit": {
+        "applicability_bridge": "condition on Bernoulli membership, invoke Gaussian right orthogonal invariance, then include its root-n norm fluctuation",
+        "correct_additive_outlier_result": "Theorem 2.18",
+        "paper_cites_theorem_2_19": "incorrect; 2.19 is an assumption for the smallest singular value"
+      },
+      "status": "VERIFIED",
+      "verifier_passed": true
+    },
+    {
+      "claim": 5,
+      "exact_contract": "In the paper's Section 4 Gaussian one-spike experiment at d/n=1 and 5% mean-shift contamination, literal MS-PCA recovers the clean sample principal component substantially better than ordinary PCA and Robust PCA (AAP).",
+      "independent_checker": {
+        "absolute_eigenvalue_errors": {
+          "clean_top": 1.7763568394002505e-15,
+          "contaminated_top_five": 1.509903313490213e-14
+        },
+        "method": "dense symmetric eigensolver on the first n=500 instance",
+        "passed": true,
+        "rpca_package": "rpca==0.1.6 RobustPCA(n_components=1)"
+      },
+      "limitation": "This directly reproduces the headline c=1, pi=5% regime with 12 trials at n=500,1000,2000; exact Robust PCA is limited to the 12 n=500 paired trials by measured runtime. It does not execute the full 15-size, 25-trial, 16-setting grid through n=10000. The literal paper-text eigenvalue algorithm is used because released main.py instead matches singular values and passes a singular value into the inverse eigenvalue map.",
+      "negative_control": {
+        "contaminated_pca_mean_alignment": 0.08584453793620149,
+        "expected": "ordinary PCA equals the clean reference PC, so its reported failure disappears",
+        "intervention": "set the mean-shift matrix A to zero",
+        "minimum_clean_pca_alignment": 0.9999999999999996,
+        "passed": true
+      },
+      "official_code": {
+        "commit": "540d660761af1d168813e6c80c6bdefcf2557217",
+        "paper_grid": "n=logspace(100,10000,15), 25 trials, c in {0.1,0.5,1,2}, pi in {0.05,0.1,0.15,0.25}",
+        "repository": "https://github.com/Mengda-Li/ms-pca"
+      },
+      "raw": {
+        "aggregate": {
+          "ms_mean_alignment": 0.9403016931618414,
+          "ms_minus_pca_bootstrap_95_percent_interval": [
+            0.75926322549461,
+            0.9257768106375113
+          ],
+          "ms_minus_rpca_bootstrap_95_percent_interval": [
+            0.6367852566743484,
+            0.9554605304018854
+          ],
+          "ms_paired_win_rate_over_pca": 0.9444444444444444,
+          "ms_paired_win_rate_over_rpca": 0.9166666666666666,
+          "pca_mean_alignment": 0.08584453793620149,
+          "rpca_mean_alignment": 0.07908832402231025
+        },
+        "rows": [
+          {
+            "d": 500,
+            "ms_mean_alignment": 0.9147241861950789,
+            "ms_median_alignment": 0.9979667090343161,
+            "ms_q05_alignment": 0.5506171982799204,
+            "ms_q95_alignment": 0.9993424686802556,
+            "ms_selection_rate": 1,
+            "n": 500,
+            "pca_mean_alignment": 0.08383787481057764,
+            "pca_median_alignment": 0.05493672926895077,
+            "pca_q05_alignment": 0.02392443847091613,
+            "pca_q95_alignment": 0.20726915838422355,
+            "rpca_evaluated_trials": 12,
+            "rpca_mean_alignment": 0.07908832402231025,
+            "rpca_median_alignment": 0.05536454380105929,
+            "rpca_q05_alignment": 0.0017960096185844821,
+            "rpca_q95_alignment": 0.2093288033261441,
+            "trials": 12
+          },
+          {
+            "d": 1000,
+            "ms_mean_alignment": 0.9104095485156498,
+            "ms_median_alignment": 0.99187737846359,
+            "ms_q05_alignment": 0.5404367052135308,
+            "ms_q95_alignment": 0.9995974696953805,
+            "ms_selection_rate": 1,
+            "n": 1000,
+            "pca_mean_alignment": 0.10994177748070459,
+            "pca_median_alignment": 0.11873424675760993,
+            "pca_q05_alignment": 0.022485330009380633,
+            "pca_q95_alignment": 0.20430140900573954,
+            "rpca_evaluated_trials": 0,
+            "trials": 12
+          },
+          {
+            "d": 2000,
+            "ms_mean_alignment": 0.9957713447747958,
+            "ms_median_alignment": 0.9989163450221673,
+            "ms_q05_alignment": 0.9847427463394034,
+            "ms_q95_alignment": 0.9999312761446016,
+            "ms_selection_rate": 1,
+            "n": 2000,
+            "pca_mean_alignment": 0.06375396151732234,
+            "pca_median_alignment": 0.03926964269199802,
+            "pca_q05_alignment": 0.007520534342535686,
+            "pca_q95_alignment": 0.16790292805063473,
+            "rpca_evaluated_trials": 0,
+            "trials": 12
+          }
+        ],
+        "seed": 2605254605,
+        "trials": [
+          {
+            "d": 500,
+            "membership_fraction": 0.056,
+            "ms_alignment": 0.9987776162707056,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.0465857774206611,
+            "rpca_alignment": 0.03996552459185946,
+            "stable_component_count": 3,
+            "trial": 0
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.056,
+            "ms_alignment": 0.9992721259758199,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.02086339986841607,
+            "rpca_alignment": 0.011307938137063734,
+            "stable_component_count": 4,
+            "trial": 1
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.05,
+            "ms_alignment": 0.9778350934387028,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.20326149989571002,
+            "rpca_alignment": 0.19312079032444404,
+            "stable_component_count": 4,
+            "trial": 2
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.042,
+            "ms_alignment": 0.9978615662939995,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.06117405552370474,
+            "rpca_alignment": 0.04481931678594358,
+            "stable_component_count": 3,
+            "trial": 3
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.036,
+            "ms_alignment": 0.028461993085852965,
+            "ms_selected_index": 2,
+            "n": 500,
+            "pca_alignment": 0.21216740764796235,
+            "rpca_alignment": 0.22913859699488867,
+            "stable_component_count": 3,
+            "trial": 4
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.044,
+            "ms_alignment": 0.9993235780052129,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.03297732959697356,
+            "rpca_alignment": 0.042444298250980624,
+            "stable_component_count": 4,
+            "trial": 5
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.044,
+            "ms_alignment": 0.9993655572830855,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.03348296103373993,
+            "rpca_alignment": 0.0001799058938553839,
+            "stable_component_count": 3,
+            "trial": 6
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.042,
+            "ms_alignment": 0.9946018144297424,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.09409625239510988,
+            "rpca_alignment": 0.08351850716330858,
+            "stable_component_count": 3,
+            "trial": 7
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.048,
+            "ms_alignment": 0.9987101133414181,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.0486994030141968,
+            "rpca_alignment": 0.06590977081617501,
+            "stable_component_count": 4,
+            "trial": 8
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.042,
+            "ms_alignment": 0.989071994004247,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.14031334198717013,
+            "rpca_alignment": 0.1437470538361575,
+            "stable_component_count": 3,
+            "trial": 9
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.062,
+            "ms_alignment": 0.9980718517746325,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.026428924600234358,
+            "rpca_alignment": 0.003118276302453744,
+            "stable_component_count": 4,
+            "trial": 10
+          },
+          {
+            "d": 500,
+            "membership_fraction": 0.056,
+            "ms_alignment": 0.9953369304375274,
+            "ms_selected_index": 1,
+            "n": 500,
+            "pca_alignment": 0.08600414474305253,
+            "rpca_alignment": 0.09178990917059272,
+            "stable_component_count": 3,
+            "trial": 11
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.042,
+            "ms_alignment": 0.9993306961985907,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.03305186892527528,
+            "rpca_alignment": null,
+            "stable_component_count": 4,
+            "trial": 0
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.061,
+            "ms_alignment": 0.9961425225284992,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.08102486311581465,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 1
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.046,
+            "ms_alignment": 0.999923526191457,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.011669590073144415,
+            "rpca_alignment": null,
+            "stable_component_count": 4,
+            "trial": 2
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.048,
+            "ms_alignment": 0.975187287732596,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.20000651699956679,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 3
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.044,
+            "ms_alignment": 0.9888355229662997,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.14573848148203902,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 4
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.05,
+            "ms_alignment": 0.00907488213467348,
+            "ms_selected_index": 2,
+            "n": 1000,
+            "pca_alignment": 0.20955072145772846,
+            "rpca_alignment": null,
+            "stable_component_count": 2,
+            "trial": 5
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.04,
+            "ms_alignment": 0.9873369984048639,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.15436196182116518,
+            "rpca_alignment": null,
+            "stable_component_count": 4,
+            "trial": 6
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.056,
+            "ms_alignment": 0.9920829026119947,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.11690893002316295,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 7
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.052,
+            "ms_alignment": 0.9892788513601718,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.14058246436610286,
+            "rpca_alignment": null,
+            "stable_component_count": 4,
+            "trial": 8
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.063,
+            "ms_alignment": 0.996977372859207,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.07451179623700624,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 9
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.045,
+            "ms_alignment": 0.9990721648842575,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.03133457177539208,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 10
+          },
+          {
+            "d": 1000,
+            "membership_fraction": 0.055,
+            "ms_alignment": 0.9916718543151853,
+            "ms_selected_index": 1,
+            "n": 1000,
+            "pca_alignment": 0.1205595634920569,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 11
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.0445,
+            "ms_alignment": 0.9864929492789566,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.1586686277838668,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 0
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.0455,
+            "ms_alignment": 0.9992254246410011,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.029290068989106965,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 1
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.0525,
+            "ms_alignment": 0.9995420248003795,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.029563766609525713,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 2
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.044,
+            "ms_alignment": 0.9999319838933372,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.01050838963662496,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 3
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.0415,
+            "ms_alignment": 0.9997966073829831,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.017475579159235678,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 4
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.049,
+            "ms_alignment": 0.9998899676410965,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.011700838612450512,
+            "rpca_alignment": null,
+            "stable_component_count": 4,
+            "trial": 5
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.046,
+            "ms_alignment": 0.9980874691537915,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.05838804177503014,
+            "rpca_alignment": null,
+            "stable_component_count": 4,
+            "trial": 6
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.0465,
+            "ms_alignment": 0.9826036094132828,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.17918929504335113,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 7
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.05,
+            "ms_alignment": 0.9999306970774544,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.003868711205315463,
+            "rpca_alignment": null,
+            "stable_component_count": 4,
+            "trial": 8
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.0485,
+            "ms_alignment": 0.9964490267072769,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.07772020863799133,
+            "rpca_alignment": null,
+            "stable_component_count": 4,
+            "trial": 9
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.056,
+            "ms_alignment": 0.9986072654033336,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.048975518774470324,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 10
+          },
+          {
+            "d": 2000,
+            "membership_fraction": 0.0445,
+            "ms_alignment": 0.9886991119046564,
+            "ms_selected_index": 1,
+            "n": 2000,
+            "pca_alignment": 0.139698491980899,
+            "rpca_alignment": null,
+            "stable_component_count": 3,
+            "trial": 11
+          }
+        ]
+      },
+      "setup": {
+        "aspect_ratio": 1,
+        "covariance_strength": 2,
+        "mean_norm": 8.94427190999916,
+        "mixture_weight": 0.05,
+        "ms_pca": "literal Algorithm 1 eigenvalue matching with pi_prime=1, C=1",
+        "ordinary_pca": "top left singular vector of contaminated sample",
+        "robust_pca": "rpca==0.1.6 RobustPCA(n_components=1), low_rank_[:,0]",
+        "robust_pca_subset": {
+          "n": 500,
+          "reason": "calibrated from the cancelled 75-fit attempt, which completed only 26 fits in over one hour",
+          "trials": 12
+        },
+        "sample_sizes": [
+          500,
+          1000,
+          2000
+        ],
+        "trials_per_size": 12,
+        "true_component": "top left singular vector of the uncontaminated sample, as in official main.py"
+      },
+      "source_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#S4",
+      "status": "VERIFIED",
+      "verifier_passed": true
+    }
+  ],
+  "compute": {
+    "actual_cgroup_cpu_quota": 8,
+    "actual_logical_cpus": 64,
+    "estimated_cores": 8,
+    "estimated_cost_usd": 0.00394023259075,
+    "gpu_devices_present": false,
+    "runtime_seconds": 472.82791089,
+    "selected_flavor": "cpu-upgrade",
+    "selected_memory_gb": 32,
+    "selected_vcpus": 8
+  },
+  "environment": {
+    "lockfile": "uv.lock",
+    "platform": "Linux-6.12.94-123.192.amzn2023.x86_64-x86_64-with-glibc2.36",
+    "project_venv": ".venv",
+    "python": "3.12.12"
+  },
+  "fixed_command": "uv sync --frozen && uv run --no-sync python reproduce.py",
+  "git_sha": "13b55da6455a15560c274deb9f06ce0a0214ebe0",
+  "paper": "Mean-Shift PCA by Knockoff Mean",
+  "paper_source": {
+    "retrieved_at": "2026-08-01T19:13:37Z",
+    "sha256": "02f4714097d3681f770d35ed958b53bc44cddac13d97916ea1510dd08e078399",
+    "url": "https://ar5iv.labs.arxiv.org/html/2605.25460"
+  }
+}
+

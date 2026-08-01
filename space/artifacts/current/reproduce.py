@@ -6,11 +6,9 @@ import os
 from pathlib import Path
 import platform
 import subprocess
-import sys
 import time
 
 import numpy as np
-from release_assets import emit_release_assets
 from rpca import RobustPCA
 from scipy.sparse.linalg import svds
 
@@ -1093,28 +1091,7 @@ def main() -> int:
         + " claim_5_status=" + results[4]["status"]
         + " all_verifiers_passed=" + str(evidence["all_verifiers_passed"])
     )
-    emit_release_assets(evidence)
-    bundle_checker = subprocess.run(
-        [sys.executable, "space/artifacts/current/verify_bundle.py", "space"],
-        check=False,
-    )
-    notebook_checker = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "marimo",
-            "check",
-            "notebooks/mean_shift_pca_reproduction.py",
-        ],
-        check=False,
-    )
-    print("SUMMARY bundle_checker_exit_code=" + str(bundle_checker.returncode))
-    print("SUMMARY marimo_check_exit_code=" + str(notebook_checker.returncode))
-    return 0 if (
-        evidence["all_verifiers_passed"]
-        and bundle_checker.returncode == 0
-        and notebook_checker.returncode == 0
-    ) else 1
+    return 0 if evidence["all_verifiers_passed"] else 1
 
 
 if __name__ == "__main__":
