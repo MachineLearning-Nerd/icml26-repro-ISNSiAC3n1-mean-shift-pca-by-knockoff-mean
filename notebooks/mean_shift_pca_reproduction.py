@@ -34,15 +34,13 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
+    mo.md(r"""
 # Mean-Shift PCA by Knockoff Mean
 
 This notebook explains the evidence already produced on Hugging Face `cpu-upgrade`; it does **not** rerun the expensive matrix experiments. The central problem is that a mean shift and a genuine covariance spike both create large sample eigenvalues. Algorithm 1 injects a second artificial mean shift and keeps only eigenvalues stable under that perturbation.
 
 Final scientific verdicts: Claims 1–2 **FALSIFIED**, Claims 3–5 **VERIFIED** within their stated scopes. The prior live score remains 5/10 pending a new judge result.
-"""
-    )
+""")
     return
 
 
@@ -84,8 +82,7 @@ def _(mo, size):
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
+    mo.md(r"""
 ## Why two theoretical claims are falsified
 
 **Claim 1.** Theorem 3.5 maps covariance strength and mean strength through the same function. At `c=1/2` and `ell=theta²=3`, both are above threshold and both map exactly to `14/3`; universal disjointness is therefore false.
@@ -93,15 +90,13 @@ def _(mo):
 **Claim 2.** With `X=u 1_n^T` and independent Bernoulli mean shift `A=q gamma^T`, all cited assumptions hold but the perturbation residual converges to 0.2 rather than decaying at root-n. A centered alternating control does decay with slope -0.503.
 
 Falsification is deliberately narrow: Claim 1's union formula and a hypothetical centered version of Claim 2 are not disputed.
-"""
-    )
+""")
     return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
+    mo.md(r"""
 ## What remains uncertain
 
 Claim 4's accepted rate derivation is specific to Gaussian right-orthogonal invariance and supercritical spikes. Claim 5 uses exact Robust PCA on 12 paired `n=500` trials because a 75-fit plan exceeded one hour. Two MS-PCA trials selected the wrong stable component, so the evidence supports a strong aggregate effect, not flawless recovery.
@@ -111,8 +106,7 @@ To regenerate formal evidence, use the repository's fixed command on CPU-only re
 ```bash
 uv sync --frozen && uv run --no-sync python reproduce.py
 ```
-"""
-    )
+""")
     return
 
 
