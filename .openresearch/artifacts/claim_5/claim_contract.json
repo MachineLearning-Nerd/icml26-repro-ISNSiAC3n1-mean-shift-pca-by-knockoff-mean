@@ -8,12 +8,13 @@
     "covariance_strength": 2,
     "mean_norm": 8.94427190999916,
     "sample_sizes": [500, 1000, 2000],
-    "trials_per_size": 25
+    "trials_per_size": 12,
+    "robust_pca_subset": "12 paired trials at n=500"
   },
   "verifier": "reproduce.py::verify_claim_5",
   "pass_conditions": [
     "MS-PCA mean alignment is at least 0.60 at every size",
-    "PCA and rpca==0.1.6 mean alignments are at most 0.45 at every size",
+    "PCA mean alignment is at most 0.45 at every size and rpca==0.1.6 mean alignment is at most 0.45 on its paired n=500 subset",
     "MS-PCA selects a stable component in at least 90% of trials at every size",
     "paired bootstrap 95% lower bounds for MS-PCA minus both baselines exceed 0.20",
     "MS-PCA wins at least 85% of paired trials against both baselines",

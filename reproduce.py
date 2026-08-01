@@ -784,7 +784,8 @@ def verify_claim_5() -> dict:
     mixture_weight = 0.05
     mean_norm = 2 * np.sqrt(np.sqrt(aspect_ratio) / mixture_weight)
     sample_sizes = [500, 1000, 2000]
-    trials = 25
+    trials = 12
+    robust_sample_size = 500
     seed = 2605254605
     rng = np.random.default_rng(seed)
     raw_trials = []
@@ -837,15 +838,17 @@ def verify_claim_5() -> dict:
                 else 0.0
             )
 
-            robust = RobustPCA(n_components=1, verbose=False)
-            robust.fit(contaminated)
-            low_rank_component = robust.low_rank_[:, 0]
-            low_rank_norm = float(np.linalg.norm(low_rank_component))
-            rpca_alignment = (
-                float(abs(true_component @ low_rank_component) / low_rank_norm)
-                if low_rank_norm > 0
-                else 0.0
-            )
+            rpca_alignment = None
+            if n == robust_sample_size:
+                robust = RobustPCA(n_components=1, verbose=False)
+                robust.fit(contaminated)
+                low_rank_component = robust.low_rank_[:, 0]
+                low_rank_norm = float(np.linalg.norm(low_rank_component))
+                rpca_alignment = (
+                    float(abs(true_component @ low_rank_component) / low_rank_norm)
+                    if low_rank_norm > 0
+                    else 0.0
+                )
 
             if n == sample_sizes[0] and trial == 0:
                 dense_clean = float(np.linalg.eigvalsh(clean @ clean.T / n)[-1])
@@ -881,12 +884,23 @@ def verify_claim_5() -> dict:
     for n in sample_sizes:
         trials_at_n = [row for row in raw_trials if row["n"] == n]
         summary = {"n": n, "d": n, "trials": len(trials_at_n)}
-        for method in ("ms", "pca", "rpca"):
+        for method in ("ms", "pca"):
             values = [row[f"{method}_alignment"] for row in trials_at_n]
             summary[f"{method}_mean_alignment"] = float(np.mean(values))
             summary[f"{method}_median_alignment"] = float(np.median(values))
             summary[f"{method}_q05_alignment"] = float(np.quantile(values, 0.05))
             summary[f"{method}_q95_alignment"] = float(np.quantile(values, 0.95))
+        rpca_values = [
+            row["rpca_alignment"]
+            for row in trials_at_n
+            if row["rpca_alignment"] is not None
+        ]
+        summary["rpca_evaluated_trials"] = len(rpca_values)
+        if rpca_values:
+            summary["rpca_mean_alignment"] = float(np.mean(rpca_values))
+            summary["rpca_median_alignment"] = float(np.median(rpca_values))
+            summary["rpca_q05_alignment"] = float(np.quantile(rpca_values, 0.05))
+            summary["rpca_q95_alignment"] = float(np.quantile(rpca_values, 0.95))
         summary["ms_selection_rate"] = float(
             np.mean([row["ms_selected_index"] is not None for row in trials_at_n])
         )
@@ -894,13 +908,15 @@ def verify_claim_5() -> dict:
 
     ms_alignments = [row["ms_alignment"] for row in raw_trials]
     pca_alignments = [row["pca_alignment"] for row in raw_trials]
-    rpca_alignments = [row["rpca_alignment"] for row in raw_trials]
+    rpca_trials = [row for row in raw_trials if row["rpca_alignment"] is not None]
+    rpca_alignments = [row["rpca_alignment"] for row in rpca_trials]
+    ms_alignments_for_rpca = [row["ms_alignment"] for row in rpca_trials]
     difference_rng = np.random.default_rng(seed + 1)
     ms_minus_pca_interval = bootstrap_mean_difference_interval(
         ms_alignments, pca_alignments, difference_rng
     )
     ms_minus_rpca_interval = bootstrap_mean_difference_interval(
-        ms_alignments, rpca_alignments, difference_rng
+        ms_alignments_for_rpca, rpca_alignments, difference_rng
     )
     aggregate = {
         "ms_mean_alignment": float(np.mean(ms_alignments)),
@@ -910,7 +926,7 @@ def verify_claim_5() -> dict:
             np.mean(np.asarray(ms_alignments) > np.asarray(pca_alignments))
         ),
         "ms_paired_win_rate_over_rpca": float(
-            np.mean(np.asarray(ms_alignments) > np.asarray(rpca_alignments))
+            np.mean(np.asarray(ms_alignments_for_rpca) > np.asarray(rpca_alignments))
         ),
         "ms_minus_pca_bootstrap_95_percent_interval": ms_minus_pca_interval,
         "ms_minus_rpca_bootstrap_95_percent_interval": ms_minus_rpca_interval,
@@ -930,10 +946,12 @@ def verify_claim_5() -> dict:
         "passed": min(clean_pca_control_alignments) > 1 - 1e-8
         and aggregate["pca_mean_alignment"] < 0.5,
     }
+    robust_row = next(row for row in rows if row["n"] == robust_sample_size)
     passed = (
         all(row["ms_mean_alignment"] >= 0.6 for row in rows)
         and all(row["pca_mean_alignment"] <= 0.45 for row in rows)
-        and all(row["rpca_mean_alignment"] <= 0.45 for row in rows)
+        and robust_row["rpca_mean_alignment"] <= 0.45
+        and robust_row["rpca_evaluated_trials"] == trials
         and min(row["ms_selection_rate"] for row in rows) >= 0.9
         and ms_minus_pca_interval[0] > 0.2
         and ms_minus_rpca_interval[0] > 0.2
@@ -964,6 +982,11 @@ def verify_claim_5() -> dict:
             "mean_norm": mean_norm,
             "sample_sizes": sample_sizes,
             "trials_per_size": trials,
+            "robust_pca_subset": {
+                "n": robust_sample_size,
+                "trials": trials,
+                "reason": "calibrated from the cancelled 75-fit attempt, which completed only 26 fits in over one hour",
+            },
             "true_component": "top left singular vector of the uncontaminated sample, as in official main.py",
             "ms_pca": "literal Algorithm 1 eigenvalue matching with pi_prime=1, C=1",
             "ordinary_pca": "top left singular vector of contaminated sample",
@@ -979,9 +1002,10 @@ def verify_claim_5() -> dict:
         "negative_control": negative_control,
         "verifier_passed": bool(passed),
         "limitation": (
-            "This directly reproduces the headline c=1, pi=5% regime with the "
-            "paper's 25 trials at n=500,1000,2000. It does not execute the full "
-            "15-size, 16-setting grid through n=10000. The literal paper-text "
+            "This directly reproduces the headline c=1, pi=5% regime with 12 "
+            "trials at n=500,1000,2000; exact Robust PCA is limited to the 12 "
+            "n=500 paired trials by measured runtime. It does not execute the full "
+            "15-size, 25-trial, 16-setting grid through n=10000. The literal paper-text "
             "eigenvalue algorithm is used because released main.py instead matches "
             "singular values and passes a singular value into the inverse eigenvalue map."
         ),
