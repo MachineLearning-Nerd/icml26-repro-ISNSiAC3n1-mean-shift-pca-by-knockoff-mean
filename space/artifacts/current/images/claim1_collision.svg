@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+<rect width="960" height="540" fill="#fafafa"/>
+<text x="55" y="55" font-family="system-ui" font-size="28" font-weight="700" fill="#111827">Claim 1: exact spike-location collision</text>
+<text x="55" y="83" font-family="system-ui" font-size="15" fill="#4b5563">Universal disjointness is falsified; the union/convergence formula is not disputed.</text>
+
+<line x1="120" y1="290" x2="840" y2="290" stroke="#9ca3af" stroke-width="3"/>
+<circle cx="480" cy="290" r="18" fill="#4f46e5"/><circle cx="480" cy="290" r="10" fill="#ef4444"/>
+<text x="480" y="245" text-anchor="middle" font-family="system-ui" font-size="26" font-weight="700">14/3</text>
+<text x="480" y="340" text-anchor="middle" font-family="system-ui" font-size="17">covariance ℓ=3 and mean θ²=3 coincide</text>
+<circle cx="275" cy="290" r="11" fill="#f59e0b"/><text x="275" y="265" text-anchor="middle" font-family="system-ui" font-size="18">187/60</text>
+<text x="275" y="375" text-anchor="middle" font-family="system-ui" font-size="15">negative control θ²=6/5 separates by 31/20</text>
+<text x="120" y="420" font-family="system-ui" font-size="15" fill="#4b5563">Exact rational arithmetic; all strengths are strictly above the BBP threshold at c=1/2.</text>
+</svg>

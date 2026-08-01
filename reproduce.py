@@ -1108,12 +1108,18 @@ def main() -> int:
         ],
         check=False,
     )
+    red_team = subprocess.run(
+        [sys.executable, "space/artifacts/current/red_team.py", "space"],
+        check=False,
+    )
     print("SUMMARY bundle_checker_exit_code=" + str(bundle_checker.returncode))
     print("SUMMARY marimo_check_exit_code=" + str(notebook_checker.returncode))
+    print("SUMMARY red_team_exit_code=" + str(red_team.returncode))
     return 0 if (
         evidence["all_verifiers_passed"]
         and bundle_checker.returncode == 0
         and notebook_checker.returncode == 0
+        and red_team.returncode == 0
     ) else 1
 
 

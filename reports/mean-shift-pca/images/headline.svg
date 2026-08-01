@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+<rect width="960" height="540" fill="#fafafa"/>
+<text x="55" y="55" font-family="system-ui" font-size="28" font-weight="700" fill="#111827">5% contamination at d/n=1</text>
+<text x="55" y="83" font-family="system-ui" font-size="15" fill="#4b5563">Mean clean-PC alignment; MS/PCA: 36 trials, Robust PCA: 12 paired n=500 trials</text>
+<line x1="80" y1="450" x2="900" y2="450" stroke="#9ca3af"/><rect x="130" y="120.89" width="180" height="329.11" rx="8" fill="#4f46e5"/><text x="220.0" y="108.89" text-anchor="middle" font-family="system-ui" font-size="22" font-weight="700">0.940</text><text x="220.0" y="485" text-anchor="middle" font-family="system-ui" font-size="18">MS-PCA</text><rect x="385" y="419.95" width="180" height="30.05" rx="8" fill="#ef4444"/><text x="475.0" y="407.95" text-anchor="middle" font-family="system-ui" font-size="22" font-weight="700">0.086</text><text x="475.0" y="485" text-anchor="middle" font-family="system-ui" font-size="18">PCA</text><rect x="640" y="422.32" width="180" height="27.68" rx="8" fill="#f59e0b"/><text x="730.0" y="410.32" text-anchor="middle" font-family="system-ui" font-size="22" font-weight="700">0.079</text><text x="730.0" y="485" text-anchor="middle" font-family="system-ui" font-size="18">Robust PCA</text>
+</svg>

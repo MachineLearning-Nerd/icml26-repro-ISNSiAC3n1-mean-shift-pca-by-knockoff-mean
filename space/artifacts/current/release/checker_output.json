@@ -1,0 +1,22 @@
+{
+  "checks": {
+    "all_controls": true,
+    "all_independent_checkers": true,
+    "all_scientific_verifiers": true,
+    "canonical_discovery": true,
+    "claim5_uncertainty": true,
+    "cpu_only": true,
+    "current_navigation_first": true,
+    "exact_statuses": true,
+    "fixed_command": true,
+    "judged_snapshot_exact": true,
+    "locked_environment": true,
+    "old_file_set_subset": true,
+    "raw_claim5_rows": true,
+    "secret_scan": true,
+    "visibility_matrix_complete": true
+  },
+  "failures": [],
+  "passed": true,
+  "verifier": "artifacts/current/verify_bundle.py"
+}
