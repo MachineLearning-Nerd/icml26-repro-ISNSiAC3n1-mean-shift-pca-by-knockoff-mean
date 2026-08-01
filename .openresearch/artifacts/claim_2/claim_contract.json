@@ -1,0 +1,7 @@
+{
+  "claim": 2,
+  "contract": "Under Assumptions 3.1 and 3.10, every eigenvector u of XX^T/n has contaminated residual norm O_p(n^-1/2).",
+  "paper_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#S3.Thmtheorem11",
+  "pass_condition": "A machine-checked derivation and calibrated sweep establish an assumption-satisfying counterexample, while a centered negative control does not trigger falsification.",
+  "verdicts": ["FALSIFIED", "BLOCKED"]
+}
