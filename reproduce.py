@@ -1112,14 +1112,20 @@ def main() -> int:
         [sys.executable, "space/artifacts/current/red_team.py", "space"],
         check=False,
     )
+    postpublication = subprocess.run(
+        [sys.executable, "postpublish_verify.py"],
+        check=False,
+    )
     print("SUMMARY bundle_checker_exit_code=" + str(bundle_checker.returncode))
     print("SUMMARY marimo_check_exit_code=" + str(notebook_checker.returncode))
     print("SUMMARY red_team_exit_code=" + str(red_team.returncode))
+    print("SUMMARY postpublication_exit_code=" + str(postpublication.returncode))
     return 0 if (
         evidence["all_verifiers_passed"]
         and bundle_checker.returncode == 0
         and notebook_checker.returncode == 0
         and red_team.returncode == 0
+        and postpublication.returncode == 0
     ) else 1
 
 
