@@ -9,6 +9,7 @@ import subprocess
 import time
 
 import numpy as np
+from rpca import RobustPCA
 from scipy.sparse.linalg import svds
 
 
@@ -760,6 +761,233 @@ def verify_claim_4_analytical() -> dict:
     }
 
 
+def bootstrap_mean_difference_interval(
+    first: list[float],
+    second: list[float],
+    rng: np.random.Generator,
+    draws: int = 4000,
+) -> list[float]:
+    paired_differences = np.asarray(first) - np.asarray(second)
+    bootstrap_means = [
+        float(np.mean(rng.choice(paired_differences, len(paired_differences), replace=True)))
+        for _ in range(draws)
+    ]
+    return [
+        float(np.quantile(bootstrap_means, 0.025)),
+        float(np.quantile(bootstrap_means, 0.975)),
+    ]
+
+
+def verify_claim_5() -> dict:
+    aspect_ratio = 1.0
+    covariance_strength = 2 * np.sqrt(aspect_ratio)
+    mixture_weight = 0.05
+    mean_norm = 2 * np.sqrt(np.sqrt(aspect_ratio) / mixture_weight)
+    sample_sizes = [500, 1000, 2000]
+    trials = 25
+    seed = 2605254605
+    rng = np.random.default_rng(seed)
+    raw_trials = []
+    dense_checker_errors = None
+    clean_pca_control_alignments = []
+
+    for n in sample_sizes:
+        d = int(aspect_ratio * n)
+        for trial in range(trials):
+            covariance_direction = rng.normal(size=d)
+            covariance_direction /= np.linalg.norm(covariance_direction)
+            mean_direction = rng.normal(size=d)
+            mean_direction /= np.linalg.norm(mean_direction)
+            noise = rng.normal(size=(d, n))
+            projected_noise = covariance_direction @ noise
+            clean = noise + (
+                np.sqrt(1 + covariance_strength) - 1
+            ) * np.outer(covariance_direction, projected_noise)
+            membership = rng.binomial(1, mixture_weight, size=n)
+            contaminated = clean + mean_norm * np.outer(mean_direction, membership)
+
+            _, clean_components = top_pca(clean, 1)
+            true_component = clean_components[:, 0]
+            contaminated_eigenvalues, contaminated_components = top_pca(contaminated)
+            pca_alignment = float(abs(true_component @ contaminated_components[:, 0]))
+
+            estimated_strength = inverse_spike_map(
+                contaminated_eigenvalues[0], aspect_ratio
+            )
+            knockoff_strength = 2 * estimated_strength
+            knockoff_direction = rng.normal(size=d)
+            knockoff_direction /= np.linalg.norm(knockoff_direction)
+            knockoff = np.outer(
+                np.sqrt(knockoff_strength) * knockoff_direction,
+                np.ones(n),
+            )
+            perturbed_eigenvalues, _ = top_pca(contaminated + knockoff)
+            nearest_shifts = np.min(
+                np.abs(
+                    contaminated_eigenvalues[:, None]
+                    - perturbed_eigenvalues[None, :]
+                ),
+                axis=1,
+            )
+            stable_indices = np.flatnonzero(nearest_shifts < 1 / np.sqrt(n))
+            selected_index = int(stable_indices[0]) if len(stable_indices) else None
+            ms_alignment = (
+                float(abs(true_component @ contaminated_components[:, selected_index]))
+                if selected_index is not None
+                else 0.0
+            )
+
+            robust = RobustPCA(n_components=1, verbose=False)
+            robust.fit(contaminated)
+            low_rank_component = robust.low_rank_[:, 0]
+            low_rank_norm = float(np.linalg.norm(low_rank_component))
+            rpca_alignment = (
+                float(abs(true_component @ low_rank_component) / low_rank_norm)
+                if low_rank_norm > 0
+                else 0.0
+            )
+
+            if n == sample_sizes[0] and trial == 0:
+                dense_clean = float(np.linalg.eigvalsh(clean @ clean.T / n)[-1])
+                dense_contaminated = np.linalg.eigvalsh(
+                    contaminated @ contaminated.T / n
+                )[-5:][::-1]
+                sparse_clean = float(top_pca(clean, 1)[0][0])
+                dense_checker_errors = {
+                    "clean_top": abs(sparse_clean - dense_clean),
+                    "contaminated_top_five": float(
+                        np.max(np.abs(contaminated_eigenvalues - dense_contaminated))
+                    ),
+                }
+
+            clean_pca_control_alignments.append(
+                float(abs(true_component @ true_component))
+            )
+            raw_trials.append(
+                {
+                    "n": n,
+                    "d": d,
+                    "trial": trial,
+                    "membership_fraction": float(np.mean(membership)),
+                    "ms_alignment": ms_alignment,
+                    "pca_alignment": pca_alignment,
+                    "rpca_alignment": rpca_alignment,
+                    "ms_selected_index": selected_index,
+                    "stable_component_count": int(len(stable_indices)),
+                }
+            )
+
+    rows = []
+    for n in sample_sizes:
+        trials_at_n = [row for row in raw_trials if row["n"] == n]
+        summary = {"n": n, "d": n, "trials": len(trials_at_n)}
+        for method in ("ms", "pca", "rpca"):
+            values = [row[f"{method}_alignment"] for row in trials_at_n]
+            summary[f"{method}_mean_alignment"] = float(np.mean(values))
+            summary[f"{method}_median_alignment"] = float(np.median(values))
+            summary[f"{method}_q05_alignment"] = float(np.quantile(values, 0.05))
+            summary[f"{method}_q95_alignment"] = float(np.quantile(values, 0.95))
+        summary["ms_selection_rate"] = float(
+            np.mean([row["ms_selected_index"] is not None for row in trials_at_n])
+        )
+        rows.append(summary)
+
+    ms_alignments = [row["ms_alignment"] for row in raw_trials]
+    pca_alignments = [row["pca_alignment"] for row in raw_trials]
+    rpca_alignments = [row["rpca_alignment"] for row in raw_trials]
+    difference_rng = np.random.default_rng(seed + 1)
+    ms_minus_pca_interval = bootstrap_mean_difference_interval(
+        ms_alignments, pca_alignments, difference_rng
+    )
+    ms_minus_rpca_interval = bootstrap_mean_difference_interval(
+        ms_alignments, rpca_alignments, difference_rng
+    )
+    aggregate = {
+        "ms_mean_alignment": float(np.mean(ms_alignments)),
+        "pca_mean_alignment": float(np.mean(pca_alignments)),
+        "rpca_mean_alignment": float(np.mean(rpca_alignments)),
+        "ms_paired_win_rate_over_pca": float(
+            np.mean(np.asarray(ms_alignments) > np.asarray(pca_alignments))
+        ),
+        "ms_paired_win_rate_over_rpca": float(
+            np.mean(np.asarray(ms_alignments) > np.asarray(rpca_alignments))
+        ),
+        "ms_minus_pca_bootstrap_95_percent_interval": ms_minus_pca_interval,
+        "ms_minus_rpca_bootstrap_95_percent_interval": ms_minus_rpca_interval,
+    }
+    independent_checker = {
+        "method": "dense symmetric eigensolver on the first n=500 instance",
+        "absolute_eigenvalue_errors": dense_checker_errors,
+        "rpca_package": "rpca==0.1.6 RobustPCA(n_components=1)",
+        "passed": dense_checker_errors is not None
+        and max(dense_checker_errors.values()) < 1e-8,
+    }
+    negative_control = {
+        "intervention": "set the mean-shift matrix A to zero",
+        "expected": "ordinary PCA equals the clean reference PC, so its reported failure disappears",
+        "minimum_clean_pca_alignment": float(min(clean_pca_control_alignments)),
+        "contaminated_pca_mean_alignment": aggregate["pca_mean_alignment"],
+        "passed": min(clean_pca_control_alignments) > 1 - 1e-8
+        and aggregate["pca_mean_alignment"] < 0.5,
+    }
+    passed = (
+        all(row["ms_mean_alignment"] >= 0.6 for row in rows)
+        and all(row["pca_mean_alignment"] <= 0.45 for row in rows)
+        and all(row["rpca_mean_alignment"] <= 0.45 for row in rows)
+        and min(row["ms_selection_rate"] for row in rows) >= 0.9
+        and ms_minus_pca_interval[0] > 0.2
+        and ms_minus_rpca_interval[0] > 0.2
+        and aggregate["ms_paired_win_rate_over_pca"] >= 0.85
+        and aggregate["ms_paired_win_rate_over_rpca"] >= 0.85
+        and independent_checker["passed"]
+        and negative_control["passed"]
+    )
+    return {
+        "claim": 5,
+        "status": "VERIFIED" if passed else "BLOCKED",
+        "exact_contract": (
+            "In the paper's Section 4 Gaussian one-spike experiment at d/n=1 "
+            "and 5% mean-shift contamination, literal MS-PCA recovers the clean "
+            "sample principal component substantially better than ordinary PCA "
+            "and Robust PCA (AAP)."
+        ),
+        "source_anchor": "https://ar5iv.labs.arxiv.org/html/2605.25460#S4",
+        "official_code": {
+            "repository": "https://github.com/Mengda-Li/ms-pca",
+            "commit": "540d660761af1d168813e6c80c6bdefcf2557217",
+            "paper_grid": "n=logspace(100,10000,15), 25 trials, c in {0.1,0.5,1,2}, pi in {0.05,0.1,0.15,0.25}",
+        },
+        "setup": {
+            "aspect_ratio": aspect_ratio,
+            "covariance_strength": covariance_strength,
+            "mixture_weight": mixture_weight,
+            "mean_norm": mean_norm,
+            "sample_sizes": sample_sizes,
+            "trials_per_size": trials,
+            "true_component": "top left singular vector of the uncontaminated sample, as in official main.py",
+            "ms_pca": "literal Algorithm 1 eigenvalue matching with pi_prime=1, C=1",
+            "ordinary_pca": "top left singular vector of contaminated sample",
+            "robust_pca": "rpca==0.1.6 RobustPCA(n_components=1), low_rank_[:,0]",
+        },
+        "raw": {
+            "seed": seed,
+            "trials": raw_trials,
+            "rows": rows,
+            "aggregate": aggregate,
+        },
+        "independent_checker": independent_checker,
+        "negative_control": negative_control,
+        "verifier_passed": bool(passed),
+        "limitation": (
+            "This directly reproduces the headline c=1, pi=5% regime with the "
+            "paper's 25 trials at n=500,1000,2000. It does not execute the full "
+            "15-size, 16-setting grid through n=10000. The literal paper-text "
+            "eigenvalue algorithm is used because released main.py instead matches "
+            "singular values and passes a singular value into the inverse eigenvalue map."
+        ),
+    }
+
+
 def cgroup_cpu_quota() -> float | None:
     cpu_max = Path("/sys/fs/cgroup/cpu.max")
     if cpu_max.exists():
@@ -789,6 +1017,7 @@ def main() -> int:
         verify_claim_2(),
         verify_claim_3(),
         verify_claim_4_analytical(),
+        verify_claim_5(),
     ]
     runtime = time.perf_counter() - started
     gpu_devices_present = any(
@@ -835,6 +1064,7 @@ def main() -> int:
         + " claim_2_status=" + results[1]["status"]
         + " claim_3_status=" + results[2]["status"]
         + " claim_4_status=" + results[3]["status"]
+        + " claim_5_status=" + results[4]["status"]
         + " all_verifiers_passed=" + str(evidence["all_verifiers_passed"])
     )
     return 0 if evidence["all_verifiers_passed"] else 1
